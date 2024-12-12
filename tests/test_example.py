@@ -6,5 +6,5 @@ class TestMathOperations(unittest.TestCase):
         self.assertEqual(add(2, 3), 5)
         self.assertEqual(add(-1, 1), 0)
 
-if _name_ == "_main_":
+if _name_ == "_project2.main_":
     unittest.main()
