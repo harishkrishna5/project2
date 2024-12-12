@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: self
+    runs-on: self-hosted
 
     steps:
     - name: Checkout source code
@@ -47,7 +47,7 @@ jobs:
         retention-days: 7  # Retain the artifact for 7 days
 
   test:
-    runs-on: self
+    runs-on: self-hosted
     needs: build
     steps:
     - name: Checkout source code
