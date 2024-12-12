@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout source code
@@ -43,11 +43,11 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: python-build
-        path: dist2/
+        path: dist/
         retention-days: 7  # Retain the artifact for 7 days
 
   test:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: build
     steps:
     - name: Checkout source code
