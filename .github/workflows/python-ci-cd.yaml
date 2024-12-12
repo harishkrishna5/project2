@@ -43,7 +43,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: python-build
-        path: dist/
+        path: dist2/
         retention-days: 7  # Retain the artifact for 7 days
 
   test:
