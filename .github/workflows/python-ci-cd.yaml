@@ -120,6 +120,8 @@ jobs:
       run: ls -la
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
+      run: |
+        cd terraform
+        terraform apply -auto-approve tfplan
     - name: Run Destroy Script
       run: bash destroy.sh
