@@ -75,7 +75,7 @@ jobs:
         python -m pytest tests/test_example.py
 
     - name: Set up AWS credentials using OIDC
-      uses: aws-actions/configure-aws-credentials@v2
+      uses: aws-actions/configure-aws-credentials@v3
       with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Use the role ARN from secrets
          # role-session-name: GitHubActionsSession
