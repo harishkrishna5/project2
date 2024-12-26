@@ -110,7 +110,10 @@ jobs:
     - name: Terraform Plan
       env:
         TF_LOG: DEBUG
-      run: terraform plan -out=tfplan
+        
+      run: |
+        cd terraform
+        terraform plan -out=tfplan
 
     - name: Terraform Apply
       run: terraform apply -auto-approve tfplan
