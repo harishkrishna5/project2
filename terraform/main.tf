@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_instance" "example" {
-  ami           = var.ami           # Referencing the ami variable
+  ami           = "ami-053b12d3152c0cc71"           # Referencing the ami variable
   instance_type = var.instance_type # Referencing the instance_type variable
 
 
