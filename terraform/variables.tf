@@ -4,11 +4,6 @@ variable "region" {
   default     = "us-west-2"
 }
 
-variable "ami" {
-  description = "The AMI ID to launch the instance"
-  type        = string
-}
-
 variable "instance_type" {
   description = "The instance type for the EC2 instance"
   type        = string
