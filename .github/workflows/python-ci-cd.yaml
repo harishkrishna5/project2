@@ -87,9 +87,16 @@ jobs:
       run: aws s3 ls
   terraform :
     runs-on: ubuntu-latest
+    needs: test
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
+    - name: List files for debugging
+      run: ls -alh
+
+      # Change to the directory containing Terraform files
+    - name: Change directory to my-terraform-project
+      run: cd terraform
 
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
