@@ -96,8 +96,8 @@ jobs:
       run: aws s3 ls
 
       # Change to the directory containing Terraform files
-    - name: Change directory to my-terraform-project
-      run: cd terraform
+   # - name: Change directory to my-terraform-project
+   #   run: cd terraform
 
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
