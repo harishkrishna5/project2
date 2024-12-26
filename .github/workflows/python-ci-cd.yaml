@@ -78,5 +78,5 @@ jobs:
       uses: aws-actions/configure-aws-credentials@v2
       with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Use the role ARN from secrets
-          role-session-name: GitHubActionsSession
+         # role-session-name: GitHubActionsSession
           aws-region: ${{ secrets.AWS_REGION }}  
