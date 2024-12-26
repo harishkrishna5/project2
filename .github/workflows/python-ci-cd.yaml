@@ -108,6 +108,8 @@ jobs:
       run: terraform init
 
     - name: Terraform Plan
+      env:
+        TF_LOG: DEBUG
       run: terraform plan -out=tfplan
 
     - name: Terraform Apply
