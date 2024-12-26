@@ -120,9 +120,9 @@ jobs:
     - name: List files to debug
       run: ls -la
 
-    - name: Terraform Apply
-      run: |
-        cd terraform
-        terraform apply -auto-approve tfplan
-    - name: Run Destroy Script
-      run: bash destroy.sh
+ #   - name: Terraform Apply
+ #     run: |
+  #      cd terraform
+  #      terraform apply -auto-approve tfplan
+ #   - name: Run Destroy Script
+  #    run: bash destroy.sh
