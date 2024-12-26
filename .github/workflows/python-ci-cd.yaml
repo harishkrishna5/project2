@@ -72,39 +72,3 @@ jobs:
       #working-directory: project2  # Ensure this is the correct root folder
       run: |
         python -m pytest tests/test_example.py
-  terraform:
-    runs-on: ubuntu-latest  # Use an Ubuntu runner
-
-    steps:
-      # Checkout the code
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      # Set up Terraform
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2.0.3
-    
-
-      # Configure AWS credentials (example for AWS, change if using other providers)
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: ap-south-1
-
-      # Initialize Terraform
-      - name: Terraform Init
-        run: terraform init
-
-      # Validate Terraform configuration
-      - name: Terraform Validate
-        run: terraform validate
-
-      # Run Terraform Plan (to preview changes)
-      - name: Terraform Plan
-        run: terraform plan
-
-      # Apply Terraform changes (only if it's a push to main or a merge to main)
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
