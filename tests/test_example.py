@@ -1,5 +1,5 @@
 import unittest
-from app import add
+from main import add
 
 class TestMathOperations(unittest.TestCase):
     def test_add(self):
@@ -7,4 +7,4 @@ class TestMathOperations(unittest.TestCase):
         self.assertEqual(add(-1, 1), 0)
 
 if __name__ == "__main__":
-    unittest.app()
+    unittest.main()
