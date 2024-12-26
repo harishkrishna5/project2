@@ -8,7 +8,8 @@ on:
 #  pull_request:
  #   branches:
   #    - main
-
+permissions:
+  id-token: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -80,3 +81,5 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Use the role ARN from secrets
          # role-session-name: GitHubActionsSession
           aws-region: ${{ secrets.AWS_REGION }}  
+    - name: List S3 buckets
+      run: aws s3 ls
