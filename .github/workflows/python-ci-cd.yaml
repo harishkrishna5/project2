@@ -92,7 +92,10 @@ jobs:
         terraform_version: 1.4.0  # Specify the Terraform version you need
 
     - name: Terraform Init
-      run: terraform init
+ 
+      run: |
+        cd terraform
+        terraform init
 
     - name: Terraform Plan
       run: terraform plan -out=tfplan
