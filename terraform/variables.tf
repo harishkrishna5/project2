@@ -7,7 +7,7 @@ variable "region" {
 variable "ami" {
   description = "The AMI ID to launch the instance"
   type        = string
-  default     = "ami-022ce6f32988af5fa"
+  ami_id     = "ami-022ce6f32988af5fa"
 }
 
 variable "instance_type" {
