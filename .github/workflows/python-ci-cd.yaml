@@ -109,13 +109,15 @@ jobs:
       run: terraform init
 
     - name: Terraform Plan
-      env:
-        TF_LOG: DEBUG
+     # env:
+     #   TF_LOG: DEBUG
         
       run: |
         cd terraform
         terraform init
         terraform plan -out=tfplan
+    - name: List files to debug
+      run: ls -la
 
     - name: Terraform Apply
       run: terraform apply -auto-approve tfplan
