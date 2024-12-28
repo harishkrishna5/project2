@@ -1,1 +1,31 @@
+name: Python CI/CD Workflow
 
+on:
+  workflow_dispatch:
+  
+permissions:
+  contents: read
+  id-token: write
+  
+jobs:
+   terraform :
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
+      
+
+    - name: Set up AWS credentials using OIDC
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  
+          aws-region: ${{ secrets.AWS_REGION }}  
+          
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.4.0 
+
+    - name: Terraform Init
+      run: terraform destroy
