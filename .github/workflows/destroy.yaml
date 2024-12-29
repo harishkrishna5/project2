@@ -6,7 +6,7 @@ on:
       resource:
         description: 'Resource to destroy'
         required: true
-        default: 'aws_instance.My EC2 instance'
+        default: 'aws_instance.example'
 
   
 permissions:
@@ -38,4 +38,4 @@ jobs:
         terraform init
         terraform plan -out=tfplan
     - name: Terraform destroy
-      run: terraform destroy -target=${{ github.event.inputs.resource }} -auto-approve
+      run: terraform destroy -auto-approve
