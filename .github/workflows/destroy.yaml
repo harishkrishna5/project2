@@ -38,4 +38,6 @@ jobs:
         terraform init
         terraform plan -out=tfplan
     - name: Terraform destroy
-      run: terraform destroy -auto-approve
+      run: |
+        cd terraform
+        terraform destroy -auto-approve
