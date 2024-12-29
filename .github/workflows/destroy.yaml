@@ -32,10 +32,10 @@ jobs:
       uses: hashicorp/setup-terraform@v1
       with:
         terraform_version: 1.4.0 
-
-    - name: Terraform Init
-      run: terraform init
-    - name: Terraform plan
-      run: terraform plan
+    - name: Terraform Plan     
+      run: |
+        cd terraform
+        terraform init
+        terraform plan -out=tfplan
     - name: Terraform destroy
       run: terraform destroy -target=${{ github.event.inputs.resource }} -auto-approve
