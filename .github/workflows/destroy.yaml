@@ -1,4 +1,4 @@
-name: Python CI/CD Workflow
+name: destroy
 
 on:
   workflow_dispatch:
