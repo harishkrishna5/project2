@@ -2,6 +2,12 @@ name: destroy
 
 on:
   workflow_dispatch:
+    inputs:
+      resource:
+        description: 'Resource to destroy'
+        required: true
+        default: 'aws_instance.example'
+
   
 permissions:
   contents: read
@@ -30,4 +36,4 @@ jobs:
     - name: Terraform Init
       run: terraform init
     - name: Terraform destroy
-      run: terraform destroy
+      run: terraform destroy -target=${{ github.event.inputs.resource }} -auto-approve
