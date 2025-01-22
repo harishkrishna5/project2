@@ -2,11 +2,7 @@ name: destroy
 
 on:
   workflow_dispatch:
-    inputs:
-      resource:
-        description: 'Resource to destroy'
-        required: true
-        default: 'aws_instance.example'
+   
 
   
 permissions:
