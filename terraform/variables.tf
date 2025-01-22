@@ -12,5 +12,5 @@ variable "instance_type" {
 variable "instance_name" {
   description = "The name tag for the EC2 instance"
   type        = string
-  default     = "My EC2 Instance"
+  default     = "My EC2 Instance123"
 }
