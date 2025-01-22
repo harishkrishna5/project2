@@ -6,6 +6,7 @@ resource "aws_instance" "example" {
   monitoring = true
   ami           = "ami-053b12d3152c0cc71"           # Referencing the ami variable
   instance_type = var.instance_type # Referencing the instance_type variable
+  iam_instance_profile = "test"
 root_block_device {
  encrypted     = true
  }
