@@ -12,11 +12,11 @@ func TestTerraformS3Bucket(t *testing.T) {
 
   // Define a unique name for the bucket (to avoid conflicts)
   uniqueID := random.UniqueId()
-  bucketName := "my-test-bucket-" + uniqueID
+  bucketName := "my-test-bucket123456987-" + uniqueID
 
   // Set up the Terraform options
   options := &terraform.Options{
-    TerraformDir: "../", // Directory containing your Terraform code
+    TerraformDir: "terraform/", // Directory containing your Terraform code
     Vars: map[string]interface{}{
       "bucket_name": bucketName,
     },
