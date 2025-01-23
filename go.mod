@@ -1,4 +1,4 @@
-module your-repo-name
+module project2
 
 go 1.20
 
