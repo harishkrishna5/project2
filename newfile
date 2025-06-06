@@ -1,0 +1,86 @@
+
+------------------------------------------
+Triggered by Gerrit: https://gerrit.ericsson.se/c/ca/ca-monitor-checks/+/19661630
+Running as SYSTEM
+[EnvInject] - Loading node environment variables.
+[EnvInject] - Preparing an environment for the build.
+[EnvInject] - Keeping Jenkins system variables.
+[EnvInject] - Keeping Jenkins build variables.
+[EnvInject] - Injecting as environment variables the properties content GERRIT_CHANGE_COMMIT_MESSAGE=blank_voluntarily
+
+[EnvInject] - Variables injected successfully.
+[EnvInject] - Injecting contributions.
+Building on the built-in node in workspace <https://aca-jenkins.seli.gic.ericsson.se/jenkins/job/ca-monitor-checks-gerrit/ws/>
+[EnvInject] - Unset unresolved 'BASH_FUNC_which%%' variable.
+[EnvInject] - Unset unresolved 'BASH_FUNC_ml%%' variable.
+[EnvInject] - Unset unresolved 'BASH_FUNC__module_raw%%' variable.
+[EnvInject] - Unset unresolved 'BASH_FUNC_scl%%' variable.
+[EnvInject] - Unset unresolved 'BASH_FUNC_switchml%%' variable.
+[EnvInject] - Unset unresolved 'BASH_FUNC_module%%' variable.
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+Warning: CredentialId "792cde92-a9ff-48c2-afa7-d809e65cbc70" could not be found.
+Cloning the remote Git repository
+Cloning repository ssh://artifactor@gerrit.ericsson.se:29418/ca/ca-monitor-checks
+ > /usr/local/git/bin/git init <https://aca-jenkins.seli.gic.ericsson.se/jenkins/job/ca-monitor-checks-gerrit/ws/> # timeout=10 Fetching upstream changes from ssh://artifactor@gerrit.ericsson.se:29418/ca/ca-monitor-checks
+ > /usr/local/git/bin/git --version # timeout=10  > git --version # 'git version 2.18.0'
+ > /usr/local/git/bin/git fetch --tags --progress -- ssh://artifactor@gerrit.ericsson.se:29418/ca/ca-monitor-checks +refs/heads/*:refs/remotes/origin/* # timeout=10  > /usr/local/git/bin/git config remote.origin.url ssh://artifactor@gerrit.ericsson.se:29418/ca/ca-monitor-checks # timeout=10  > /usr/local/git/bin/git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10  > /usr/local/git/bin/git config remote.origin.url ssh://artifactor@gerrit.ericsson.se:29418/ca/ca-monitor-checks # timeout=10 Pruning obsolete local branches Fetching upstream changes from ssh://artifactor@gerrit.ericsson.se:29418/ca/ca-monitor-checks
+ > /usr/local/git/bin/git fetch --tags --progress --prune -- ssh://artifactor@gerrit.ericsson.se:29418/ca/ca-monitor-checks refs/changes/30/19661630/1 # timeout=10  > /usr/local/git/bin/git rev-parse 6e6e68b811f917c4efa3627b361140f19a902a54^{commit} # timeout=10 Checking out Revision 6e6e68b811f917c4efa3627b361140f19a902a54 (refs/changes/30/19661630/1)  > /usr/local/git/bin/git config core.sparsecheckout # timeout=10  > /usr/local/git/bin/git checkout -f 6e6e68b811f917c4efa3627b361140f19a902a54 # timeout=10 Commit message: " modified aca_archive_logs.cfg"
+ > /usr/local/git/bin/git rev-parse FETCH_HEAD^{commit} # timeout=10  > /usr/local/git/bin/git rev-list --no-walk c4d1ba23d9c4fba4f4ece325b33711735ad2a1ae # timeout=10 Run condition [Current build status] enabling prebuild for step [Execute shell] Jenkins Artifactory Plugin version: 4.0.3 [EnvInject] - Executing scripts and injecting environment variables after the SCM step.
+[EnvInject] - Injecting as environment variables the properties content SONAR_USER_HOME=<https://aca-jenkins.seli.gic.ericsson.se/jenkins/job/ca-monitor-checks-gerrit/ws/>
+
+[EnvInject] - Variables injected successfully.
+[EnvInject] - Inject global [*******]s.
+[EnvInject] - Mask [*******]s that will be passed as build parameters.
+[Gradle] - Launching build.
+[workspace] $ <https://aca-jenkins.seli.gic.ericsson.se/jenkins/job/ca-monitor-checks-gerrit/ws/gradlew> -Dsonar.login=05da2137be6c101244f19c56960315276193ce1e -Dsonar.host.url=https://sonarqube.lmera.ericsson.se/ -Dartifactory_[*******]=[*******] clean build artifactoryPublish
+NOTE: Picked up JDK_JAVA_OPTIONS:  --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
+Downloading https://arm.sero.gic.ericsson.se/artifactory/gradle-distributions/gradle-8.5-bin.zip
+............10%.............20%............30%.............40%.............50%............60%.............70%.............80%............90%.............100%
+
+Welcome to Gradle 8.5!
+
+Here are the highlights of this release:
+ - Support for running on Java 21
+ - Faster first use with Kotlin DSL
+ - Improved error and warning messages
+
+For more details see https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdocs.gradle.org%2F8.5%2Frelease-notes.html&data=05%7C02%7Charish.krishna.ext%40ericsson.com%7Cfd4640a22c804c9ca7dd08dda50722f7%7C92e84cebfbfd47abbe52080c6b87953f%7C0%7C0%7C638848172247312278%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=6xVWRb7i7kCn%2BYUQ5SyUa7zZlsU1zHVba8DcWJLmBzE%3D&reserved=0
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+> Task :clean UP-TO-DATE
+> Task :ansibleDistTar
+> Task :ansibleDistZip
+> Task :compileJava NO-SOURCE
+
+> Task :compileGroovy
+NOTE: Picked up JDK_JAVA_OPTIONS:  --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
+
+> Task :processResources
+> Task :classes
+> Task :jar
+> Task :startScripts
+> Task :distTar FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':distTar'.
+> Entry workspace-R26A02-SNAPSHOT/aca_archive_logs.cfg is a duplicate but no duplicate handling strategy has been set. Please refer to https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdocs.gradle.org%2F8.5%2Fdsl%2Forg.gradle.api.tasks.Copy.html%23org.gradle.api.tasks.Copy%3AduplicatesStrategy&data=05%7C02%7Charish.krishna.ext%40ericsson.com%7Cfd4640a22c804c9ca7dd08dda50722f7%7C92e84cebfbfd47abbe52080c6b87953f%7C0%7C0%7C638848172247332159%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=oF2QvKslbH%2BVCz06tqt8%2Bm6OviO4d%2BVdedSGgTZnXGA%3D&reserved=0 for details.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fhelp.gradle.org%2F&data=05%7C02%7Charish.krishna.ext%40ericsson.com%7Cfd4640a22c804c9ca7dd08dda50722f7%7C92e84cebfbfd47abbe52080c6b87953f%7C0%7C0%7C638848172247347678%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=D8yyqiBtYuTBc4RtafkpfhlL1kL27D6Zr6x13MRFHPo%3D&reserved=0.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://eur02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdocs.gradle.org%2F8.5%2Fuserguide%2Fcommand_line_interface.html%23sec%3Acommand_line_warnings&data=05%7C02%7Charish.krishna.ext%40ericsson.com%7Cfd4640a22c804c9ca7dd08dda50722f7%7C92e84cebfbfd47abbe52080c6b87953f%7C0%7C0%7C638848172247363050%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=vqeS3Bm%2F%2BT%2FD86Yq4rHVAGozpfQAV4wLp3iJ9RDSiDQ%3D&reserved=0 in the Gradle documentation.
+
+BUILD FAILED in 41s
+8 actionable tasks: 7 executed, 1 up-to-date Build step 'Invoke Gradle script' changed build result to FAILURE Build step 'Invoke Gradle script' marked build as failure
