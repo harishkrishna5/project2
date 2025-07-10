@@ -1,0 +1,1 @@
+seliiwvdec55224	 	Firefox	100.76.120.56	 	An attacker was able to perform an out-of-bounds read or write on a JavaScript `Promise` object. This vulnerability affects Firefox < 138.0.4, Firefox ESR < 128.10.1, Firefox ESR < 115.23.1, Thunderbird < 128.10.2, and Thunderbird < 138.0.2.\n	Update Mozilla FireFox Update Mozilla FireFox to version 139 or newer	CVE-2025-4918
