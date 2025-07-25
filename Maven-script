@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+BASE_PATH="/local/armdata"
+SERVERS=("seroius00434" "seroius00235" "seroius00552" "seroius00913" "seroius00944" "seroius01251")
+LOG_SUBPATH="logs/archived"
+OUTPUT_DIR="/tmp/maven_central_logs"
+REPO_NAME="repo1-2rc"
+
+# === DATE CALCULATION ===
+TARGET_DATE=$(date -d "2 days ago" +%Y-%m-%d)
+LOG_FILENAME="artifactory-request-out.${TARGET_DATE}.log"
+ZIP_FILENAME="${LOG_FILENAME}.zip"
+
+# === INIT OUTPUT FOLDER ===
+mkdir -p "$OUTPUT_DIR"
+
+echo "📅 Generating report for: $TARGET_DATE"
+echo "📁 Saving reports to: $OUTPUT_DIR"
+echo
+
+# === MAIN LOOP OVER SERVERS ===
+for SERVER in "${SERVERS[@]}"; do
+    LOG_DIR="${BASE_PATH}/${SERVER}/${LOG_SUBPATH}"
+    ZIP_PATH="${LOG_DIR}/${ZIP_FILENAME}"
+
+    echo "🔍 Processing $ZIP_PATH"
+
+    if [[ -f "$ZIP_PATH" ]]; then
+        TEMP_LOG="/tmp/${SERVER}_${LOG_FILENAME}.tmp"
+        unzip -p "$ZIP_PATH" > "$TEMP_LOG"
+
+        # Count occurrences
+        SUCCESS_COUNT=$(grep "$REPO_NAME" "$TEMP_LOG" | grep -c " 200 ")
+        RATE_LIMIT_COUNT=$(grep "$REPO_NAME" "$TEMP_LOG" | grep -c " 429 ")
+
+        # Write to output log
+        REPORT_FILE="${OUTPUT_DIR}/${SERVER}_${TARGET_DATE}.log"
+        {
+            echo "Server: $SERVER"
+            echo "Date: $TARGET_DATE"
+            echo "Successful Requests (200): $SUCCESS_COUNT"
+            echo "Rate Limit Errors (429): $RATE_LIMIT_COUNT"
+        } > "$REPORT_FILE"
+
+        echo "✅ Report saved: $REPORT_FILE"
+        rm -f "$TEMP_LOG"
+    else
+        echo "⚠️ Log file not found: $ZIP_PATH"
+        echo -e "Server: $SERVER\nDate: $TARGET_DATE\nLog file not found\n" > "${OUTPUT_DIR}/${SERVER}_${TARGET_DATE}.log"
+    fi
+
+    echo
+done
+
+echo "✅ All done. Check reports in: $OUTPUT_DIR"
