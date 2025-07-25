@@ -1,0 +1,105 @@
+
+# get current date and time
+curdate=`date +%Y-%m-%d`
+
+# get the hostname of the server
+HOSTNAME=`hostname -s`
+TMP_FOLDER="/tmp/aca-archive-log"
+mkdir -p "$TMP_FOLDER"
+
+LOG_FILE="$TMP_FOLDER/archive-aca-$curdate.log"
+# The err file to record any errors during archiving, set to the same folder of this config file
+ERR_FILE="$TMP_FOLDER/archive-aca.err-$curdate.log"
+
+ARTIFACTORY_ARCHIVED_LOG_PATH=/opt/aca/logs/archived
+ARTIFACTORY_LOG_PATH=/opt/aca/logs
+ACA_LOG_PATH=/opt/aca/control/log/archived
+ACA_FE_LOG_PATH=/local/acadata/"$HOSTNAME"/logs/httpd/archived
+AS_FE_LOG_PATH=/local/acadata/"$HOSTNAME"/logs/httpd/archived
+## Log files name regex definition
+# front end
+if [[ "$CONFIG" == "ACA-FE" ]] || [[ "$CONFIG" == "AS-FE" ]]; then
+    LOG_FILES_REGEX=(
+     "access_log-([0-9]{8})"
+     "error_log-([0-9]{8})"
+     "ssl_access_log-([0-9]{8})"
+     "ssl_error_log-([0-9]{8})"
+     "ssl_request_log-([0-9]{8})"
+     )
+fi
+# artifactory and file service
+if [[ $CONFIG == "FS" ]]; then
+    LOG_FILES_REGEX=(
+     ".*[.-]([0-9]{4})-([0-9]{2})-([0-9]{2}).*\.log.gz"
+     ".*[.-]{1}([0-9]{4})-([0-9]{2})-([0-9]{2}).*\.log.zip"
+     ".*[.-]([0-9]{4})-([0-9]{2})-([0-9]{2}).gz"
+     )
+fi
+# aca-service
+if [[ $CONFIG == "MS" ]]; then
+    LOG_FILES_REGEX=(
+    "aca-service.log-([0-9]{4})-([0-9]{2})-([0-9]{2}).*\.log.zip"
+    "aca-service-request-([0-9]{4})-([0-9]{2})-([0-9]{2}).*\.log.zip"
+    )
+fi
+# access-service
+if [[ $CONFIG == "AS" ]]; then
+    LOG_FILES_REGEX=(
+     "access.log-([0-9]{4})-([0-9]{2})-([0-9]{2}).*\.log.zip"
+     "access-request-([0-9]{4})-([0-9]{2})-([0-9]{2}).*\.log.zip"
+     "access-audit-([0-9]{4})-([0-9]{2})-([0-9]{2}).*\.*\.log.zip"
+     "access-denied-login-([0-9]{4})-([0-9]{2})-([0-9]{2}).*\.*\.log.zip"
+    )
+fi
+
+# To add bunch of files to upload, use the add_upload_files function:
+#    add_upload_files repo_path $CAN_DELETE/$NO_DELETE $CHECK_TODAY/$CHECK_YESTERDAY list_of_files/folders
+#
+# Where, list_of_files/folders can be wildcards, and will be expanded by shell
+#
+# The wildcard directions like *, shall not be within quotes otherwise
+# it is not expanded
+#
+# For each file in the list, the archive script will upload as individual file.
+
+# Below logs are uploaded only daily
+if [[ $CONFIG == "FS" ]]; then
+   # To zip and upload jvm_gc logs
+   # Make a daily archive zip
+   jvm_zip="$ARTIFACTORY_ARCHIVED_LOG_PATH/jvm_gc.${curdate}.log.zip"
+   zip -j $jvm_zip "${ARTIFACTORY_LOG_PATH}"/jvm_gc.log*
+   add_upload_files "file-service" $FS_FOLDER_ID $CHECK_BEFORE_YESTERDAY "$ARTIFACTORY_ARCHIVED_LOG_PATH"/*.log.zip "$ARTIFACTORY_ARCHIVED_LOG_PATH"/*.log.gz "$ARTIFACTORY_LOG_PATH"/aca_webapp*.log.zip "$ARTIFACTORY_LOG_PATH"/console*.gz "$ARTIFACTORY_ARCHIVED_LOG_PATH"/jvm_gc.*.log.zip
+fi
+
+if [[ $CONFIG == "AS" ]]; then
+    add_upload_files "access-service" $AS_FOLDER_ID $CHECK_BEFORE_YESTERDAY "$ACA_LOG_PATH"/access.log*.log.zip "$ACA_LOG_PATH"/access-request*.log.zip
+    access_audit_zip="$ACA_LOG_PATH/access-audit-${curdate}.log.zip"
+    zip -j $access_audit_zip "$ACA_LOG_PATH"/access-audit.log
+    add_upload_files "access-audit" $AS_AUDIT_FOLDER_ID $CHECK_TODAY "$ACA_LOG_PATH"/access-audit*.log.zip "$ACA_LOG_PATH"/access-denied-login*.log.zip
+fi
+
+if [[ $CONFIG == "MS" ]]; then
+        log_date_input="${upload_date:-$(date --date="-$CHECK_BEFORE_YESTERDAY day" +%Y-%m-%d)}"
+        log_suffix=$(date -d "$log_date_input" +"%Y-%m-%d")
+
+    add_upload_files "metadata-service" $MS_FOLDER_ID $CHECK_BEFORE_YESTERDAY "$ACA_LOG_PATH"/aca-service.log-${log_suffix}.*.log.zip "$ACA_LOG_PATH"/aca-service-request-${log_suffix}.*.log.zip
+fi
+
+if [[ $CONFIG == "ACA-FE" ]]; then
+        log_date_input="${upload_date:-$(date --date="-$CHECK_BEFORE_YESTERDAY day" +%Y-%m-%d)}"
+        log_suffix=$(date -d "$log_date_input" +"%Y%m%d")
+        log_year=$(date -d "$log_date_input" +"%Y")
+        log_month=$(date -d "$log_date_input" +"%m")
+
+    add_upload_files "aca-fe" $ACA_FE_FOLDER_ID $CHECK_BEFORE_YESTERDAY "$ACA_FE_LOG_PATH"/$log_year/$log_month/access_log-$log_suffix.gz "$ACA_FE_LOG_PATH"/$log_year/$log_month/error_log-$log_suffix.gz "$ACA_FE_LOG_PATH"/$log_year/$log_month/ssl_access_log-$log_suffix.gz "$ACA_FE_LOG_PATH"/$log_year/$log_month/ssl_error_log-$log_suffix.gz "$ACA_FE_LOG_PATH"/$log_year/$log_month/ssl_request_log-$log_suffix.gz
+fi
+
+if [[ $CONFIG == "AS-FE" ]]; then
+        log_date_input="${upload_date:-$(date --date="-$CHECK_BEFORE_YESTERDAY day" +%Y-%m-%d)}"
+        log_suffix=$(date -d "$log_date_input" +"%Y%m%d")
+        log_year=$(date -d "$log_date_input" +"%Y")
+        log_month=$(date -d "$log_date_input" +"%m")
+
+    add_upload_files "access-fe" $AS_FE_FOLDER_ID $CHECK_BEFORE_YESTERDAY "$AS_FE_LOG_PATH"/$log_year/$log_month/access_log-$log_suffix.gz "$AS_FE_LOG_PATH"/$log_year/$log_month/error_log-$log_suffix.gz "$AS_FE_LOG_PATH"/$log_year/$log_month/ssl_access_log-$log_suffix.gz "$AS_FE_LOG_PATH"/$log_year/$log_month/ssl_error_log-$log_suffix.gz "$AS_FE_LOG_PATH"/$log_year/$log_month/ssl_request_log-$log_suffix.gz
+
+fi
