@@ -1,0 +1,64 @@
+#!/bin/bash
+
+logfile="repo_monitor_$(date +%Y-%m-%d).log"
+exec > >(tee -a "$logfile") 2>&1
+
+echo "Date: $(date '+%Y-%m-%d')"
+echo "Region: SERO"
+echo "Repositories Monitored: repo1-2rc, apache-maven-2rc, proj-maven-apache-remote"
+echo "-----------------------------------------------------"
+
+# Get day before yesterday's date
+target_date=$(date -d "2 days ago" '+%Y-%m-%d')
+
+servers=(
+  "seroius00434"
+  "seroius00235"
+  "seroius00552"
+  "seroius00913"
+  "seroius00944"
+  "seroius01251"
+)
+
+repos=(
+  "repo1-2rc"
+  "apache-maven-2rc"
+  "proj-maven-apache-remote"
+)
+
+total_success=0
+total_errors=0
+
+for server in "${servers[@]}"; do
+  echo "Server: $server"
+  LOG_PATH="/local/armdata/$server/logs/archived"
+
+  for repo in "${repos[@]}"; do
+    success=0
+    errors=0
+
+    for zipfile in "$LOG_PATH"/artifactory-request-out."$target_date".*.log.zip; do
+      if [[ -f "$zipfile" ]]; then
+        unzip -p "$zipfile" | grep "$repo" | grep -E ' 200 | 201 | 206 | 304 ' | wc -l | {
+          read line; success=$((success + line))
+        }
+        unzip -p "$zipfile" | grep "$repo" | grep ' 429 ' | wc -l | {
+          read line; errors=$((errors + line))
+        }
+      fi
+    done
+
+    echo "  ➤ Repo: $repo"
+    echo "     ✅ Success: $success"
+    echo "     🚫 429 Errors: $errors"
+
+    total_success=$((total_success + success))
+    total_errors=$((total_errors + errors))
+  done
+
+  echo "-----------------------------------------------------"
+done
+
+echo "🔢 TOTAL SUMMARY (for logs on $target_date)"
+echo "✅ Total Successful Requests: $total_success"
+echo "🚫 Total 429 Errors: $total_errors"
