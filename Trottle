@@ -48,9 +48,9 @@ for server in "${servers[@]}"; do
       fi
     done
 
-    echo "  ➤ Repo: $repo"
-    echo "     ✅ Success: $success"
-    echo "     🚫 429 Errors: $errors"
+    echo "      Repo: $repo"
+    echo "      Success: $success"
+    echo "      429 Errors: $errors"
 
     total_success=$((total_success + success))
     total_errors=$((total_errors + errors))
@@ -59,6 +59,6 @@ for server in "${servers[@]}"; do
   echo "-----------------------------------------------------"
 done
 
-echo "🔢 TOTAL SUMMARY (for logs on $target_date)"
-echo "✅ Total Successful Requests: $total_success"
-echo "🚫 Total 429 Errors: $total_errors"
+echo " TOTAL SUMMARY (for logs on $target_date)"
+echo " Total Successful Requests: $total_success"
+echo " Total 429 Errors: $total_errors"
