@@ -15,8 +15,8 @@ ZIP_FILENAME="${LOG_FILENAME}.zip"
 # === INIT OUTPUT FOLDER ===
 mkdir -p "$OUTPUT_DIR"
 
-echo "📅 Generating report for: $TARGET_DATE"
-echo "📁 Saving reports to: $OUTPUT_DIR"
+echo "Generating report for: $TARGET_DATE"
+echo "Saving reports to: $OUTPUT_DIR"
 echo
 
 # === MAIN LOOP OVER SERVERS ===
@@ -24,7 +24,7 @@ for SERVER in "${SERVERS[@]}"; do
     LOG_DIR="${BASE_PATH}/${SERVER}/${LOG_SUBPATH}"
     ZIP_PATH="${LOG_DIR}/${ZIP_FILENAME}"
 
-    echo "🔍 Processing $ZIP_PATH"
+    echo "Processing $ZIP_PATH"
 
     if [[ -f "$ZIP_PATH" ]]; then
         TEMP_LOG="/tmp/${SERVER}_${LOG_FILENAME}.tmp"
@@ -43,14 +43,14 @@ for SERVER in "${SERVERS[@]}"; do
             echo "Rate Limit Errors (429): $RATE_LIMIT_COUNT"
         } > "$REPORT_FILE"
 
-        echo "✅ Report saved: $REPORT_FILE"
+        echo "Report saved: $REPORT_FILE"
         rm -f "$TEMP_LOG"
     else
-        echo "⚠️ Log file not found: $ZIP_PATH"
+        echo "Log file not found: $ZIP_PATH"
         echo -e "Server: $SERVER\nDate: $TARGET_DATE\nLog file not found\n" > "${OUTPUT_DIR}/${SERVER}_${TARGET_DATE}.log"
     fi
 
     echo
 done
 
-echo "✅ All done. Check reports in: $OUTPUT_DIR"
+echo " All done. Check reports in: $OUTPUT_DIR"
