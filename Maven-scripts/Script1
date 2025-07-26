@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+BASE_PATH="/local/armdata"
+LOG_SUBPATH="logs/archived"
+REPO="repo1-2rc"
+LOG_PREFIX="artifactory-request-out"
+TARGET_DATE=$(date -d "2 days ago" +%Y-%m-%d)
+
+# === STATUS CODES TO TRACK ===
+CODES=("200" "206" "429")
+
+# === GET HOSTNAMES MATCHING 'seroius*' IN BASE PATH ===
+HOSTNAMES=$(ls $BASE_PATH | grep '^seroius')
+
+# === LOOP THROUGH HOSTS AND STATUS CODES ===
+for HOST in $HOSTNAMES; do
+  LOG_DIR="$BASE_PATH/$HOST/$LOG_SUBPATH"
+  FILE_PATTERN="$LOG_PREFIX.$TARGET_DATE*"
+
+  echo "----- $HOST ($TARGET_DATE) -----"
+
+  for CODE in "${CODES[@]}"; do
+    COUNT=$(zgrep "$REPO" "$LOG_DIR/$FILE_PATTERN" 2>/dev/null | grep "$CODE" | wc -l)
+    echo "$CODE: $COUNT"
+  done
+
+  echo
+done
