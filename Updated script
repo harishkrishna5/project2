@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+BASE_PATH="/local/armdata"
+SERVERS=("seroius00434" "seroius00235" "seroius00552" "seroius00913" "seroius00944" "seroius01251")
+LOG_SUBPATH="logs/archived"
+OUTPUT_DIR="/tmp/maven_central_logs"
+REPO_NAME="repo1-2rc"
+SUMMARY_CSV="/tmp/maven_central_summary.csv"
+
+# === DATE CALCULATION ===
+TARGET_DATE=$(date -d "2 days ago" +%Y-%m-%d)
+LOG_PATTERN="artifactory-request-out.${TARGET_DATE}.*.log.zip"
+
+# === INIT OUTPUT FOLDER ===
+mkdir -p "$OUTPUT_DIR"
+echo "Server,Date,Success_Total(200+201+206+304),RateLimit_429" > "$SUMMARY_CSV"
+
+echo "📅 Generating report for: $TARGET_DATE"
+echo "📁 Saving per-server logs to: $OUTPUT_DIR"
+echo "🧾 CSV summary: $SUMMARY_CSV"
+echo
+
+# === MAIN LOOP OVER SERVERS ===
+for SERVER in "${SERVERS[@]}"; do
+    LOG_DIR="${BASE_PATH}/${SERVER}/${LOG_SUBPATH}"
+    echo "🔍 Processing logs for server: $SERVER"
+
+    # Find all matching zipped logs
+    MATCHING_ZIPS=($(find "$LOG_DIR" -maxdepth 1 -type f -name "$LOG_PATTERN" 2>/dev/null))
+
+    if [[ ${#MATCHING_ZIPS[@]} -eq 0 ]]; then
+        echo "⚠️ Log files not found for $SERVER on $TARGET_DATE"
+        echo -e "Server: $SERVER\nDate: $TARGET_DATE\nLog files not found\n" > "${OUTPUT_DIR}/${SERVER}_${TARGET_DATE}.log"
+        echo "$SERVER,$TARGET_DATE,0,0" >> "$SUMMARY_CSV"
+    else
+        TEMP_LOG="/tmp/${SERVER}_${TARGET_DATE}_combined.tmp"
+        > "$TEMP_LOG"
+
+        # Unzip and combine logs
+        for ZIP_FILE in "${MATCHING_ZIPS[@]}"; do
+            unzip -p "$ZIP_FILE" >> "$TEMP_LOG"
+        done
+
+        # === Grep-based success + rate-limit detection ===
+        SUCCESS_COUNT=$(grep "$REPO_NAME" "$TEMP_LOG" | grep -E '\|(200|201|206|304)\|' | wc -l)
+        RATE_LIMIT_COUNT=$(grep "$REPO_NAME" "$TEMP_LOG" | grep -E '\|429\|' | wc -l)
+
+        # Save individual server log
+        REPORT_FILE="${OUTPUT_DIR}/${SERVER}_${TARGET_DATE}.log"
+        {
+            echo "Server: $SERVER"
+            echo "Date: $TARGET_DATE"
+            echo "Successful Requests (200,201,206,304): $SUCCESS_COUNT"
+            echo "Rate Limit Errors (429): $RATE_LIMIT_COUNT"
+        } > "$REPORT_FILE"
+
+        # Append to CSV
+        echo "$SERVER,$TARGET_DATE,$SUCCESS_COUNT,$RATE_LIMIT_COUNT" >> "$SUMMARY_CSV"
+
+        echo "✅ Report saved: $REPORT_FILE"
+        rm -f "$TEMP_LOG"
+    fi
+
+    echo
+done
+
+echo "✅ All done."
+echo "📊 Combined CSV report available at: $SUMMARY_CSV"
