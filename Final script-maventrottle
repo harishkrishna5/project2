@@ -20,20 +20,20 @@ if [ ! -f "$SUMMARY_CSV" ]; then
   echo "Server,Date,Success_200,Success_206,Success_Total_200+206,RateLimit_429" > "$SUMMARY_CSV"
 fi
 
-echo "📅 Generating report for: $TARGET_DATE"
-echo "📁 Saving per-server logs to: $OUTPUT_DIR"
-echo "🧾 Appending to CSV summary: $SUMMARY_CSV"
+echo "Generating report for: $TARGET_DATE"
+echo "Saving per-server logs to: $OUTPUT_DIR"
+echo "Appending to CSV summary: $SUMMARY_CSV"
 echo
 
 # === MAIN LOOP OVER SERVERS ===
 for SERVER in "${SERVERS[@]}"; do
     LOG_DIR="${BASE_PATH}/${SERVER}/${LOG_SUBPATH}"
-    echo "🔍 Processing logs for server: $SERVER"
+    echo "Processing logs for server: $SERVER"
 
     MATCHING_ZIPS=($(find "$LOG_DIR" -maxdepth 1 -type f -name "$LOG_PATTERN" 2>/dev/null))
 
     if [[ ${#MATCHING_ZIPS[@]} -eq 0 ]]; then
-        echo "⚠️ Log files not found for $SERVER on $TARGET_DATE"
+        echo " Log files not found for $SERVER on $TARGET_DATE"
         echo -e "Server: $SERVER\nDate: $TARGET_DATE\nLog files not found\n" > "${OUTPUT_DIR}/${SERVER}_${TARGET_DATE}.log"
         sed -i "/^$SERVER,$TARGET_DATE,/d" "$SUMMARY_CSV"
         echo "$SERVER,$TARGET_DATE,0,0,0,0" >> "$SUMMARY_CSV"
@@ -76,13 +76,13 @@ for SERVER in "${SERVERS[@]}"; do
         sed -i "/^$SERVER,$TARGET_DATE,/d" "$SUMMARY_CSV"
         echo "$SERVER,$TARGET_DATE,$COUNT_200,$COUNT_206,$TOTAL_SUCCESS,$COUNT_429" >> "$SUMMARY_CSV"
 
-        echo "✅ Report saved: $REPORT_FILE"
+        echo "Report saved: $REPORT_FILE"
         rm -f "$TEMP_LOG"
     fi
 
     echo
 done
 
-echo "✅ All done."
-echo "📊 Combined Repo Summary:"
+echo "All done."
+echo "Combined Repo Summary:"
 column -s, -t "$SUMMARY_CSV"
