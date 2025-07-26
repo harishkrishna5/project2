@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+SERVERS=("seroius00434" "seroius00235" "seroius00552" "seroius00913" "seroius00944" "seroius01251")
+BASE_PATH="/local/armdata"
+REPO_NAME="repo1-2rc"
+LOG_SUBPATH="logs/archived"
+LOG_PREFIX="artifactory-request-out"
+STATUS_CODES=("200" "206" "429")
+TARGET_DATE=$(date -d "2 days ago" +%Y-%m-%d)
+
+# === LOOP THROUGH SERVERS ===
+for HOST in "${SERVERS[@]}"; do
+  LOG_DIR="$BASE_PATH/$HOST/$LOG_SUBPATH"
+  FILES=$(find "$LOG_DIR" -type f -name "${LOG_PREFIX}.${TARGET_DATE}*.log.z" 2>/dev/null)
+
+  echo "----- $HOST ($TARGET_DATE) -----"
+
+  if [ -z "$FILES" ]; then
+    for CODE in "${STATUS_CODES[@]}"; do
+      echo "$CODE: 0"
+    done
+  else
+    for CODE in "${STATUS_CODES[@]}"; do
+      COUNT=0
+      for FILE in $FILES; do
+        TMP_COUNT=$(zcat "$FILE" 2>/dev/null | grep "$REPO_NAME" | grep "$CODE" | wc -l)
+        COUNT=$((COUNT + TMP_COUNT))
+      done
+      echo "$CODE: $COUNT"
+    done
+  fi
+
+  echo
+done
