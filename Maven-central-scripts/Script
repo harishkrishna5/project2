@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+SERVERS=("seroius00434" "seroius00235" "seroius00552" "seroius00913" "seroius00944" "seroius01251")
+BASE_PATH="/local/armdata"
+REPO_PATTERNS=("repo1.maven.org" "repo.maven.apache.org")
+LOG_SUBPATH="logs/archived"
+LOG_PREFIX="artifactory-request-out"
+STATUS_CODES=("200" "404" "429")
+TARGET_DATE=$(date -d "2 days ago" +%Y-%m-%d)
+
+# === INIT TOTAL COUNTERS ===
+declare -A TOTAL_COUNTS
+for CODE in "${STATUS_CODES[@]}"; do
+  TOTAL_COUNTS[$CODE]=0
+done
+
+# === PROCESS LOGS ===
+for HOST in "${SERVERS[@]}"; do
+  LOG_DIR="$BASE_PATH/$HOST/$LOG_SUBPATH"
+  FILES=$(find "$LOG_DIR" -type f -name "${LOG_PREFIX}.${TARGET_DATE}*.log.zip" 2>/dev/null)
+
+  if [ -n "$FILES" ]; then
+    for CODE in "${STATUS_CODES[@]}"; do
+      for FILE in $FILES; do
+        for REPO in "${REPO_PATTERNS[@]}"; do
+          COUNT=$(zgrep "$REPO" "$FILE" 2>/dev/null | grep "|$CODE|" | wc -l)
+          TOTAL_COUNTS[$CODE]=$((TOTAL_COUNTS[$CODE] + COUNT))
+        done
+      done
+    done
+  fi
+done
+
+# === PRINT TOTALS ONLY ===
+echo "===== Total Hits Across All Servers for $TARGET_DATE ====="
+for CODE in "${STATUS_CODES[@]}"; do
+  echo "$CODE: ${TOTAL_COUNTS[$CODE]}"
+done
