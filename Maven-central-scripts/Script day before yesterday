@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+OUTPUT_FILE="/var/lib/node_exporter/textfile_collector/artifactory_status_codes.prom"
+SERVERS=("seroius00434" "seroius00235" "seroius00552" "seroius00913" "seroius00944" "seroius01251")
+BASE_PATH="/local/armdata"
+REPO_PATTERNS=("repo1.maven.org" "repo.maven.apache.org")
+STATUS_CODES=("200" "404" "429")
+LOG_SUBPATH="logs/archived"
+LOG_PREFIX="artifactory-request-out"
+TARGET_DATE=$(date -d "2 days ago" +%Y-%m-%d)
+
+# === INIT TOTAL COUNTERS ===
+declare -A TOTAL_COUNTS
+for CODE in "${STATUS_CODES[@]}"; do
+  TOTAL_COUNTS[$CODE]=0
+done
+
+# === COUNT LOOP ===
+for HOST in "${SERVERS[@]}"; do
+  LOG_DIR="$BASE_PATH/$HOST/$LOG_SUBPATH"
+  FILES=$(find "$LOG_DIR" -type f -name "${LOG_PREFIX}.${TARGET_DATE}*.log.zip" 2>/dev/null)
+
+  for CODE in "${STATUS_CODES[@]}"; do
+    for FILE in $FILES; do
+      for REPO in "${REPO_PATTERNS[@]}"; do
+        COUNT=$(zgrep "$REPO" "$FILE" 2>/dev/null | grep "|$CODE|" | wc -l)
+        TOTAL_COUNTS[$CODE]=$((TOTAL_COUNTS[$CODE] + COUNT))
+      done
+    done
+  done
+done
+
+# === WRITE TO .prom FILE IN PROMETHEUS FORMAT ===
+{
+  echo "# HELP artifactory_status_code_total Total number of HTTP status codes across all servers"
+  echo "# TYPE artifactory_status_code_total gauge"
+  for CODE in "${STATUS_CODES[@]}"; do
+    echo "artifactory_status_code_total{code=\"$CODE\"} ${TOTAL_COUNTS[$CODE]}"
+  done
+} > "$OUTPUT_FILE"
