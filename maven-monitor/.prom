@@ -1,0 +1,2 @@
+#check_maven_usage gauge
+check_maven_usage 0
