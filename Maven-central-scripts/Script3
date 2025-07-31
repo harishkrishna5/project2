@@ -35,6 +35,6 @@ done
   echo "# HELP artifactory_status_code_total Total number of HTTP status codes across all servers"
   echo "# TYPE artifactory_status_code_total gauge"
   for CODE in "${STATUS_CODES[@]}"; do
-    echo "artifactory_status_code_total{code=\"$CODE\", day=\"$TODAY_DATE\"} ${TOTAL_COUNTS[$CODE]}"
+    echo "artifactory_status_code_total{code=\"$CODE\" ${TOTAL_COUNTS[$CODE]}"
   done
 } > "$OUTPUT_FILE"
