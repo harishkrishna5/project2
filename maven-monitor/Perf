@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+SERVERS=("seroius00434" "seroius00235" "seroius00552" "seroius00913" "seroius00944" "seroius01251")
+BASE_PATH="/local/armdata"
+REPO_PATTERNS=("repo1.maven.org" "repo.maven.apache.org")
+LOG_SUBPATH="logs"
+LOG_FILENAME="artifactory-request-out.log"
+
+# === INIT COUNTER ===
+TOTAL_429=0
+
+# === COUNT LOOP ===
+for HOST in "${SERVERS[@]}"; do
+  LOG_FILE="$BASE_PATH/$HOST/$LOG_SUBPATH/$LOG_FILENAME"
+  if [[ -f "$LOG_FILE" ]]; then
+    for REPO in "${REPO_PATTERNS[@]}"; do
+      COUNT=$(grep "$REPO" "$LOG_FILE" | grep "|429|" | wc -l)
+      TOTAL_429=$((TOTAL_429 + COUNT))
+    done
+  fi
+done
+
+# === FINAL OUTPUT in Nagios format ===
+STATUS=0
+MSG="Maven Central Status OK"
+PERF_DATA="status_429=${TOTAL_429};0;0"
+
+echo "${STATUS}|${MSG}|${PERF_DATA}"
+exit $STATUS
