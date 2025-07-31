@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# === CONFIGURATION ===
+
+SERVERS=("seroius00434" "seroius00235" "seroius00552" "seroius00913" "seroius00944" "seroius01251")
+BASE_PATH="/local/armdata"
+REPO_PATTERNS=("repo1.maven.org" "repo.maven.apache.org")
+STATUS_CODES=("200" "404" "429")
+LOG_SUBPATH="logs"
+LOG_FILENAME="artifactory-request-out.log"
+TODAY_DATE=$(date +%Y-%m-%d)
+
+# === INIT TOTAL COUNTERS ===
+declare -A TOTAL_COUNTS
+for CODE in "${STATUS_CODES[@]}"; do
+  TOTAL_COUNTS[$CODE]=0
+done
+
+# === COUNT LOOP ===
+for HOST in "${SERVERS[@]}"; do
+  LOG_FILE="$BASE_PATH/$HOST/$LOG_SUBPATH/$LOG_FILENAME"
+
+  if [[ -f "$LOG_FILE" ]]; then
+    for CODE in "${STATUS_CODES[@]}"; do
+      for REPO in "${REPO_PATTERNS[@]}"; do
+        COUNT=$(grep "$REPO" "$LOG_FILE" | grep "|$CODE|" | wc -l)
+        TOTAL_COUNTS[$CODE]=$((TOTAL_COUNTS[$CODE] + COUNT))
+      done
+    done
+  fi
+done
+
+# === FORMAT OUTPUT FOR monitor.sh ===
+STATUS=0
+MSG="Maven Central Status OK"
+PERF_DATA=""
+
+for CODE in "${STATUS_CODES[@]}"; do
+  PERF_DATA+="${CODE}=${TOTAL_COUNTS[$CODE]};0;0 "
+done
+
+# Trim trailing space
+PERF_DATA=$(echo "$PERF_DATA" | sed 's/ *$//')
+
+echo "${STATUS}|${MSG}|${PERF_DATA}"
