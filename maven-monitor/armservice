@@ -1,0 +1,12 @@
+
+[Unit]
+Description=Monitoring of ARM service 60m
+Wants=armMonitoring-60m.timer
+
+[Service]
+Type=oneshot
+ExecStart=/local/armdata/scripts/check_mk/monitor.sh /local/arm_checks/60m/ 'check_be_disk_utilization_general' 'check_maven_usage'
+User=artifactor
+
+[Install]
+WantedBy=multi-user.target
