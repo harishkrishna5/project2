@@ -1,0 +1,564 @@
+#!/usr/bin/python3
+
+# App: op5Plugins
+# Version: R60A01
+
+import xml.etree.ElementTree as ET
+import subprocess
+import re
+import errno
+import os.path
+import sys
+import os
+import string
+import json
+import requests
+from requests.auth import HTTPBasicAuth
+import argparse
+import textwrap
+
+#############################################################################################
+# This script is to check the important artifactory config by invoking a customized REST API
+# to retrieve the artifactory config, and then comparing to a reference file stored in
+# /opt/arm/var/..._targets.csv (which shall be pre-created).
+#
+# For detail information, run the script with no arguments to see the usage.
+#
+# The script needs support of Python 2.6.6+
+#
+############################################################################################
+# Developed by   guo.peng.liang@ericsson.se
+#
+# 2016-03-01     Initial version
+############################################################################################
+
+OK=0
+WARNING=1
+CRITICAL=2
+
+FILE_CHECKSUM_PREFIX = "FC:"
+
+REF_FILE_NAME_CFG = "config_chk_targets.csv"
+REF_FILE_NAME_SEC = "security_chk_targets.csv"
+SKIP_DIRECTORIES = "^access/data"   # we can define multiple directories and files by declaring it as regex
+
+# Real ref file name to be replaced by either of above
+ref_file_name = ""
+
+REF_FILE_PATH = "/opt/arm/var/" # + REF_FILE_NAME
+#REF_FILE_PATH = "./" # + REF_FILE_NAME
+
+#Following URL is the new REST API path with the customized plugin
+REST_API_URL_CONFIG = "/artifactory/api/plugins/execute/systemConfiguration"
+REST_API_URL_SECURITY = "/artifactory/api/plugins/execute/systemSecurity"
+REST_API_URL_CHECKSUM = "/artifactory/api/plugins/execute/getSecurityFilesCheckSums"
+# Real api url is to be replaced by either of above
+rest_api_url = ""
+
+ref_file_path = ""
+
+baseUrl = ""
+username = ""
+password = ""
+# The target fields to check
+# Format:
+# check_targets = [  [xpath1, regex1], [xpath2, regex2], ... ]
+check_targets = []
+
+#security folder file checksums map
+security_files_checksums = {}
+
+# The target fields to write to reference file
+check_targets_to_write = []
+
+# By default, the script is to check towards the reference, and not overwritting the ref values
+generate_ref_values = False
+
+# Check toward template or not when generate the reference
+check_towards_template = True
+
+#check security configure flag, if true also needs check the security folder
+check_security_cfg = False
+
+# Whether we are loading check targets from default template
+loading_from_default = False
+
+# Type of this check, either "config" or "security"
+chk_type = ""
+
+# The result string to be output (if any check fails)
+result = ""
+
+# The return code
+retcode = 0
+
+##########################################################################################
+#
+#  Print usage of the script
+#
+##########################################################################################
+def printUsage():
+
+    print("This script is to check the important artifactory config/security settings  by invoking a customized REST")
+    print("API to retrieve the artifactory settings, and then comparing to a reference file stored in ")
+    print("/opt/arm/var/..csv")
+    print("")
+    print("The script can be used as an OP5/Nagios plugin for continuously monitoring, and also be used to")
+    print("generate/re-generate the reference file by reading the current config/security settings.")
+    print("")
+    print(" - When running as OP5/Nagios plugin, this script shall be invoked by NRPE service with the BaseURL set")
+    print("   to the DNS Entry of the ARM instance, (unning on either the SA server, or HA master backend.")
+    print("   If the reference file does not yet exist, the default template reference file")
+    print("   under the same folder of this script is to be loaded. A WARNING status is generated then.")
+    print("")
+    print(" - When running to generate reference file ('gen'), the script is to be run manually")
+    print("   in a shell under user 'artifactor' so as to have write permission to the reference file. ")
+    print("   The default template is to be loaded and the actual values are to be written in the")
+    print("   reference file generated in the etc folder.")
+    print("")
+    print("Usage: " + sys.argv[0] + " --baseUrl <BaseURL> --username <username> --password <password> --checkType <config/security> [--gen] [--nocheck]")
+    print("       <BaseURL>         - The base url of the artifactory instance, including basic auth parameters.")
+    print("            Ex: https://admin:password@arm.sero.gic.ericsson.se or")
+    print("                http://admin:parmassword@localhost:8081")
+    print("            The artifactory user to invoke the API to get the settings shall be either an admin user, ")
+    print("            the user 'armmonitor', or a user in 'monitors' group")
+    print("       <config/security> - Specity whether this check is towards config or security ")
+    print("       [--gen]           - (Optional) If present, the script is to retrieve the artifactory settings")
+    print("                           and the reference file is to be generated with new values.")
+    print("       [--nocheck]       - (Optional, for dev only) If present, the script just generate the reference file")
+    print("                           according to actual config, but do not check upon the default template")
+
+
+##########################################################################################
+#
+#  Validate and get command line options
+#
+##########################################################################################
+def getOptions():
+
+    global baseUrl, generate_ref_values, check_towards_template, chk_type, ref_file_name, rest_api_url, check_security_cfg, username, password
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument('--baseUrl', help=textwrap.dedent('''\
+                                                           The base url of the artifactory instance, including basic auth parameters.
+                                                           Eg: https://arm.sero.gic.ericsson.se or http://localhost:8081.
+                                                           The artifactory user to invoke the API to get the settings shall be
+                                                           either an admin user, or a user in 'monitors' group'''), required=True )
+    parser.add_argument('--username', help='Username used for the REST API call', required=True)
+    parser.add_argument('--password', help='Password for the user', required=True)
+    parser.add_argument('--checkType', help='Type of the check either "config" or "security"', required=True)
+    parser.add_argument('--gen', action="store_true", help=textwrap.dedent('''\
+                                                     (Optional) If present, the script is to retrieve the artifactory settings
+                                                     and the reference file is to be generated with new values.'''))
+    parser.add_argument('--noCheck', action="store_true", help=textwrap.dedent('''\
+                                                     (Optional, for dev only) If present, the script just generate the reference file
+                                                     according to actual config, but do not check upon the default template'''))
+    args = parser.parse_args()
+
+    '''
+    if len ( sys.argv ) < 3 or len ( sys.argv ) > 5:
+        printUsage()
+        sys.exit (WARNING)
+    '''
+    baseUrl = args.baseUrl
+    username = args.username
+    password = args.password
+
+    chk_type = args.checkType
+
+    if chk_type == "config":
+        ref_file_name = REF_FILE_NAME_CFG
+        rest_api_url = REST_API_URL_CONFIG
+    elif chk_type == "security":
+        ref_file_name = REF_FILE_NAME_SEC
+        rest_api_url = REST_API_URL_SECURITY
+        check_security_cfg = True
+    else:
+        printUsage()
+        sys.exit(WARNING)
+
+    # If the option is present as 'gen', the check is not going to be made, but the reference will
+    # be overwritten. Set the flags accordingly
+    '''
+    if len (sys.argv) >= 4:
+        if sys.argv[3] == 'gen':
+            generate_ref_values = True
+            if len (sys.argv) >= 5:
+                if sys.argv[4] == 'nocheck':
+                    check_towards_template = False
+                else:
+                    printUsage ()
+                    sys.exit (WARNING)
+        else:
+            printUsage ()
+            sys.exit (WARNING)
+    else:
+        generate_ref_values = False
+    '''
+    generate_ref_values = False
+    if args.gen:
+        generate_ref_values = True
+    if args.noCheck:
+        check_towards_template = False
+##########################################################################################
+# Load the reference files and fill the array of check targets.
+# If the reference file does not yet exist in the etc folder, the default reference file
+# is loaded from the same directory of this script
+# Return True if the reference file can be successfully loaded
+##########################################################################################
+def loadCheckReferences():
+
+    global loading_from_default
+
+    if generate_ref_values:
+        # If generating, read the default template file regardless of the one in etc
+        reading_ref_file_path = os.path.dirname(os.path.realpath(sys.argv[0])) + "/" + ref_file_name
+    else:
+        # If not generating, read the file from etc first
+        reading_ref_file_path = ref_file_path
+
+    while True:
+        try:
+            config_file = open(reading_ref_file_path, 'r')
+
+            for config_line in config_file.read().splitlines():
+
+                if config_line == '': continue # skip empty lines
+
+                if config_line[0] == '#': continue # skip comment lines
+
+                i = config_line.find(",")
+
+                one_target = [ config_line[:i], config_line[i+1:] ]
+
+                if len(one_target) != 2:
+                    print("Ref error in line: " + config_line)
+                    return False
+
+                check_targets.append(one_target)
+
+            return True
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+
+                if not generate_ref_values:
+                    # We are not generating, and the file not found. Set the reference file path to the one
+                    # under the same folder of the script, and try to load again
+                    reading_ref_file_path = os.path.dirname(os.path.realpath(sys.argv[0])) + "/" + ref_file_name
+
+                    loading_from_default = True
+                else:
+                    # If we are generating reference ,but default template read error, exit
+                    print("Reference template file could not be loaded.")
+                    return False
+
+            else:
+                print("Reference file read error.")
+                print(e)
+                return False
+
+########################################################################
+#
+# Generate an fail result with 'info'
+#
+########################################################################
+def generateFailResult( info ):
+
+    global retcode, result
+
+    result = result + "\n"  # Not the first failure, add a new line first
+    result = result + info
+    retcode = WARNING # WARNING to be returned
+
+########################################################################
+#
+# find all subelements with XPath
+#
+# Python 2.6.6 does not support complete feature of XPath.
+# In order not to rely on higher version of Python, this function
+# is created to handle the basic form of XPath:
+#
+#   -  <path...>/tag[field="..."]/<path...>
+#
+# This function returns all elements that matches the path, or the XPath
+# in the form shown above.
+#
+########################################################################
+def findallByXPath( root, xpath ):
+
+    # Detect whether we have a selector string in a form as
+    # <path...>/tag[field="..."]
+    matchIdx = str.find(xpath, "[")
+
+    if matchIdx < 0:
+        # Just return the API result, finding with the path
+        return root.findall(xpath)
+    else:
+        # We have a selector string
+        # Handle it with iteration and return those matches
+
+        matchEnd = str.rfind(xpath, "]")
+
+        if matchEnd < 0:
+            print("XPATH error: " + xpath)
+            sys.exit(CRITICAL)
+
+        # Index of "=", and two quotes (")
+        i = str.find(xpath, "=", matchIdx, matchEnd)
+        j = str.find(xpath, "\"", i + 1, matchEnd)
+        k = str.rfind(xpath, "\"", j+1, matchEnd)
+
+        # field name to match
+        field_name = xpath[ matchIdx + 1 : i ].strip()
+
+        # expected attribute value
+        field_value = xpath[ j+1 : k]
+
+        # path before the matching selector
+        path = xpath[ : matchIdx ]
+
+        # path after the matching selector
+        path1 = xpath[ matchEnd + 1 : ]
+
+        # Iterate all elements search by the pure path
+        tags = root.findall(path)
+
+        ret_tags = []
+
+        for tag in tags:
+
+            # Get the field which is to be matched
+            ee = tag.find("./" + field_name)
+
+            if ee.text == field_value:
+
+                # We get a match here
+
+                if path1=="":
+                    # No further path under the tree of the matched element
+                    # Add it to the return list
+                    ret_tags = ret_tags + [tag]
+                else:
+                    # There is further path under the tree of the matched element
+                    # Find all subelements
+                    ret_tags = ret_tags + tag.findall( "." + path1)
+
+        return ret_tags
+
+########################################################################
+#
+# Get the security files checksums and put into a global map<filname, sha1>
+#
+########################################################################
+def getSecurityFilesCheckSums():
+
+    global security_files_checksums, username, password
+    '''
+    process = subprocess.Popen(["curl", baseUrl + REST_API_URL_CHECKSUM, "--silent"], stdout=subprocess.PIPE)
+    checksums, err = process.communicate()
+    '''
+    checksums = requests.get( baseUrl + REST_API_URL_CHECKSUM , auth=HTTPBasicAuth(username, password))
+    checksumMap = json.loads(checksums.text)
+    if 'errors' in checksumMap:
+        raise ValueError(checksumMap["errors"])
+    else:
+        for key in checksumMap:
+            security_files_checksums[key] = checksumMap[key]
+
+########################################################################
+#
+# Check the security file checksum change or not.
+# Return the new checksume value and remove it from the global map
+#
+########################################################################
+def checkFileCheckSums( fname, value ):
+
+    global security_files_checksums
+    if not re.search(SKIP_DIRECTORIES, fname):
+        if fname not in security_files_checksums:
+            generateFailResult("Security file:" + fname + " was deleted!")
+        elif security_files_checksums[fname] != value:
+            generateFailResult("Security file:" + fname + " changed!")
+    return security_files_checksums.pop(fname, None)
+########################################################################
+#
+# Now the script runs from here
+#
+########################################################################
+
+getOptions()
+
+ref_file_path = REF_FILE_PATH + ref_file_name
+
+if not loadCheckReferences():
+    sys.exit(WARNING)
+
+try:
+    if check_security_cfg:
+        getSecurityFilesCheckSums()
+except Exception as err:
+    print("Read files from security folder failed! Please check it is existing and you have access to it. {0}".format(err))
+
+try:
+    '''
+    # Invoke the REST API to retrieve the settings of artifactory
+    p=subprocess.Popen (["curl", baseUrl + rest_api_url, "--silent"],
+                        stdout=subprocess.PIPE)
+
+    # Get the output (XM) and assign to variable of config
+    config, err = p.communicate()
+
+    #print config
+    #print err
+
+    # Remove the name spaces from config tag to make it easier to find through xpath (tricky way though)
+    config = re.sub("<config.+", "<config>", config)
+
+    #Remove reverseProxies for now as it causes parsing error
+    config = re.sub(r'<reverseProxies.*/reverseProxies>', '<reverseProxies/>', config, flags=re.S)
+
+    #print config
+    '''
+    # Change to using requests instead of subprocess and XML is returned as object, so before re.sub need to decode it.
+    res = requests.get( baseUrl + rest_api_url , auth=HTTPBasicAuth(username, password))
+    config = res.text
+    # Remove the name spaces from config tag to make it easier to find through xpath (tricky way though)
+    config = re.sub("<config.+", "<config>", config)
+    #Remove reverseProxies for now as it causes parsing error
+    config = re.sub(r'<reverseProxies.*/reverseProxies>', '<reverseProxies/>', config, flags=re.S)
+
+    # Get the XML root element
+    root = ET.fromstring(config)
+except:
+    print(sys.exc_info())
+    # Print the first four line of result for trouble shooting
+    #lines=0
+
+    #for line in config.splitlines():
+        #print line
+        #lines = lines + 1
+        #if lines > 4: break
+
+    sys.exit(WARNING)
+
+retcode = OK
+result = ""  # The string to print if any checks fail
+
+# Iterate each check targets
+for target in check_targets:
+
+    if check_security_cfg and target[0].startswith(FILE_CHECKSUM_PREFIX):
+        newChecksum = checkFileCheckSums(target[0][len(FILE_CHECKSUM_PREFIX):], target[1])
+        if newChecksum != None:
+            target[1] = newChecksum
+        else:
+            continue
+    else:
+        xpath = "." + target[0]  # Get the xpath and add the default . (from current element)
+
+        if check_towards_template:
+            regex = target[1]        # Get the expected result (as regular expression)
+        else:
+            regex = ".*"             # Don't care the value
+
+        tags = findallByXPath( root, xpath )
+        #tags = root.findall (xpath)
+
+        #print tags
+
+        if len(tags) == 0:
+
+            if regex != "-" and regex != ".*":
+                # I expect that at least one of the element shall exist
+                generateFailResult("Check failed: xpath=" + xpath + " not found")
+            elif regex == ".*":
+                # We expect .* (any or none) and having 'none' now. Should update reference file with "-"
+                target [1] = "-"
+
+        else:
+
+            value = ""
+
+            for tag in tags:
+                #print tag
+                # If we have multiple elements matched, and the values are not all the same, we fail.
+                if value != "" and tag.text != value:
+                    generateFailResult("Check failed: xpath=" + xpath + " matching multiple elements but different values")
+                    continue
+                value = tag.text         # Get the actual value
+                #print value
+
+                if regex != ".*" and regex !="-" and value == None:
+                    # We expect something but the value is none
+                    #print 'here'
+                    generateFailResult("Value is None:" + xpath)
+                    continue
+                elif value == None:
+                    # regex == '.*' and value == None
+                    # Should write target as '-'
+                    target [1] = "-"
+                else:
+                    # Value is not None here.
+                    if regex == "-":
+                        # I expect that none of the elements shall exist or value shall be none, but now I found at
+                        # least one
+                        generateFailResult("Check failed: xpath=" + xpath + " expected to be none, but found.")
+                        continue
+                    try:
+                        pattern = re.compile(regex)
+                    except:
+                        generateFailResult("Taget error, regex not compilable:" + xpath + ":" + regex)
+                        continue
+
+                    # Perform actual check here
+                    if not generate_ref_values:
+                        if not pattern.match(value):
+                            # Cascade the response if the check failed
+                            generateFailResult("Check failed: xpath=" + xpath + ";regex=" + regex + ";value=" + value)
+                            continue
+                    else:
+                        # Update the check target value
+                        target[1] = "^" + re.escape(value) + "$"
+
+
+    if generate_ref_values:
+        # Store the value in the check target preparing to write to reference file
+        # We want exact match here, and as we are going to match regular expression
+        # so, escape the string properly and matching the whole phase
+
+        #print target
+        check_targets_to_write.append([target[0], target[1]])
+
+if check_security_cfg and len(security_files_checksums) > 0:
+    # Process all the leftover of the map 'security_files_checksums'
+    for fname in security_files_checksums.keys():
+        if not re.search(SKIP_DIRECTORIES, fname):
+            if generate_ref_values:
+                #generate, added into csv
+                check_targets_to_write.append ([FILE_CHECKSUM_PREFIX + fname, security_files_checksums[fname]])
+            else:
+                generateFailResult("New security file:" + fname + " was added into security folder!")
+
+if retcode == OK:
+    result = "All checks OK."
+    if generate_ref_values:
+        # Generate the reference file
+        try:
+            config_file = open (ref_file_path, 'w')
+            for one_target in check_targets_to_write:
+                config_file.write (one_target[0] + "," + one_target[1] + "\n")
+            result = result + "Target and values succesfully written to reference file: "  + ref_file_path
+        except IOError as e:
+            result = "Reference file write error: " + ref_file_path
+            result = result + str(e)
+            retcode = WARNING
+
+    elif loading_from_default:
+        # If not overwriting, but the reference file not found in etc folder (loading from default)
+        # Still generate a warning
+        result = result + " However reference file not found: " + ref_file_path +". Loading from default reference only."
+        retcode = WARNING
+else:
+    generateFailResult("Reference file path: " + ref_file_path)
+
+print(result)
+sys.exit (retcode)
