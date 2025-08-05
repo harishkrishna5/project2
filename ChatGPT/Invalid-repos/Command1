@@ -1,0 +1,4 @@
+zgrep "2025-08-04" /local/armdata/selius20*/logs/archived/artifactory-service* \
+| grep "should be a repo request and does not match any repo key" \
+| sed -E 's/.*Request (\/[^ ]+) should be a repo request.*/\1/' \
+| sort | uniq -c | sort -nr
